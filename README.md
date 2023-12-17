@@ -2,9 +2,16 @@ Spent a day to create this small app, it can read a math expression as input arg
 
 Example:
 ```
-./calc '34 + 56 * (3 + 8) + 39/3 + 57 % 12'
-Expression AST: {Operator:+ Lhs:{Operator:+ Lhs:{Operator:+ Lhs:{Val:34} Rhs:{Operator:* Lhs:{Val:56} Rhs:{Operator:+ Lhs:{Val:3} Rhs:{Val:8}}}} Rhs:{Operator:/ Lhs:{Val:39} Rhs:{Val:3}}} Rhs:{Operator:% Lhs:{Val:57} Rhs:{Val:12}}}
-The calculation result of math expression '34 + 56 * (3 + 8) + 39/3 + 57 % 12' is 667.00
+./calc '6+2*(3+8)-4+27/3/3 + 37%9'
+The generated math expression AST tree:
+(L + R)
+(L + R) (L % R)
+(L - R) (L / R) ( 37 )  ( 9 )
+(L + R) ( 4 )   (L / R) ( 3 )
+( 6 )   (L * R) ( 27 )  ( 3 )
+( 2 )   (L + R)
+( 3 )   ( 8 )
+The calculation result of math expression '6+2*(3+8)-4+27/3/3 + 37%9' is 31.00
 ```
 
 If expression is invalid, will print error with error position
