@@ -23,11 +23,11 @@ type BinaryExprAST struct {
 }
 
 func (n NumberExprAST) toString() string {
-	return fmt.Sprintf("NumberExpressionAST: %s", strconv.FormatFloat(n.Val, 'f', 0, 64))
+	return fmt.Sprintf("( %s )", strconv.FormatFloat(n.Val, 'f', 0, 64))
 }
 
 func (b BinaryExprAST) toString() string {
-	return fmt.Sprintf("BinaryExpressionAST: (%s %s %s", b.Operator, b.Lhs.toString(), b.Rhs.toString())
+	return fmt.Sprintf("(L %s R)", b.Operator)
 }
 
 // math operators precedence, higher ones will be calculated first
@@ -43,7 +43,7 @@ type AST struct {
 	Err          error
 }
 
-func (a *AST) geTokenPrecedence() int {
+func (a *AST) getCurrentTokenPrecedence() int {
 	if precedence, ok := optPrecedence[a.currentToken.Tok]; ok {
 		return precedence
 	}
@@ -76,12 +76,14 @@ func (a *AST) parseNumber() NumberExprAST {
 	}
 
 	numberAST := NumberExprAST{Val: number}
-	a.getNextToken()
 	return numberAST
 }
 
 func (a *AST) ParseExpression() ExpressionAST {
 	lhs := a.parsePrimary()
+	if a.getNextToken() == nil {
+		return lhs
+	}
 	return a.parseBinaryOpRHS(0, lhs)
 }
 
@@ -105,9 +107,9 @@ func (a *AST) parsePrimary() ExpressionAST {
 				))
 				return nil
 			}
-			a.getNextToken()
 			return expAST
 		} else {
+			// Means this position should be '(' or number, use parNumber() to throw error
 			return a.parseNumber()
 		}
 	default:
@@ -117,7 +119,7 @@ func (a *AST) parsePrimary() ExpressionAST {
 
 func (a *AST) parseBinaryOpRHS(minPrecedence int, lhs ExpressionAST) ExpressionAST {
 	for {
-		tokenPrecedence := a.geTokenPrecedence()
+		tokenPrecedence := a.getCurrentTokenPrecedence()
 		if tokenPrecedence < minPrecedence {
 			return lhs
 		}
@@ -127,10 +129,17 @@ func (a *AST) parseBinaryOpRHS(minPrecedence int, lhs ExpressionAST) ExpressionA
 			return lhs
 		}
 		rhs := a.parsePrimary()
-		if rhs == nil {
+		if a.Err != nil || rhs == nil {
 			return nil
 		}
-		nextPrecedence := a.geTokenPrecedence()
+		if a.getNextToken() == nil {
+			return BinaryExprAST{
+				Operator: binaryOp,
+				Lhs:      lhs,
+				Rhs:      rhs,
+			}
+		}
+		nextPrecedence := a.getCurrentTokenPrecedence()
 		if tokenPrecedence < nextPrecedence {
 			rhs = a.parseBinaryOpRHS(tokenPrecedence+1, rhs)
 			if rhs == nil {
@@ -159,4 +168,51 @@ func CreateAST(tokens []*Token, source string) *AST {
 	}
 
 	return ast
+}
+
+func GetMaxLevel(root ExpressionAST, level int) int {
+	if root == nil {
+		return level
+	}
+
+	switch root.(type) {
+	case NumberExprAST:
+		return level + 1
+	case BinaryExprAST:
+		return max(GetMaxLevel(root.(BinaryExprAST).Lhs, level+1), GetMaxLevel(root.(BinaryExprAST).Rhs, level+1))
+	default:
+		return level
+	}
+}
+
+func PrintCalcAST(root ExpressionAST) {
+	if root == nil {
+		return
+	}
+
+	queue := []ExpressionAST{root}
+
+	for len(queue) > 0 {
+		layerSize := len(queue)
+
+		for i := 0; i < layerSize; i++ {
+			node := queue[0]
+			queue = queue[1:]
+
+			switch node.(type) {
+			case BinaryExprAST:
+				lNode := node.(BinaryExprAST).Lhs
+				rNode := node.(BinaryExprAST).Rhs
+				if lNode != nil {
+					queue = append(queue, lNode)
+				}
+				if rNode != nil {
+					queue = append(queue, rNode)
+				}
+			case NumberExprAST:
+			}
+			fmt.Printf("%s\t", node.toString())
+		}
+		fmt.Println()
+	}
 }

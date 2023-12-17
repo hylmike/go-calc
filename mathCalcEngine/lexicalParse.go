@@ -19,7 +19,7 @@ type Token struct {
 	Tok string
 	// Literal, Operator
 	Type int
-	// tok position in original source string
+	// tok position, used for print error position
 	Offset int
 }
 
@@ -86,6 +86,7 @@ func (p *Parser) nextTok() *Token {
 		}
 		err = p.nextCh()
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		// Here implicitly includes p.nextCh()
 		for p.isNumber(p.Char) && p.nextCh() == nil {
 		}
 		token = &Token{
@@ -94,15 +95,13 @@ func (p *Parser) nextTok() *Token {
 			Offset: start,
 		}
 	default:
-		if p.Char != ' ' {
-			message := fmt.Sprintf(
-				"Symbol error: unknown '%v', position [%v:]\n%s",
-				string(p.Char),
-				start,
-				ErrPos(p.Source, start),
-			)
-			p.Err = errors.New(message)
-		}
+		message := fmt.Sprintf(
+			"Symbol error: unknown '%v', position [%v:]\n%s",
+			string(p.Char),
+			start,
+			ErrPos(p.Source, start),
+		)
+		p.Err = errors.New(message)
 	}
 
 	return token

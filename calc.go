@@ -27,7 +27,8 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Expression AST: %+v\n", astTree)
+	fmt.Println("The generated math expression AST tree:")
+	mathCalcEngine.PrintCalcAST(astTree)
 
 	result := mathCalcEngine.GetExprASTResult(astTree)
 
