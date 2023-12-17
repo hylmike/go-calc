@@ -109,8 +109,28 @@ func (a *AST) parsePrimary() ExpressionAST {
 			}
 			return expAST
 		} else {
-			// Means this position should be '(' or number, use parNumber() to throw error
-			return a.parseNumber()
+			if a.currentToken.Tok == "+" {
+				a.getNextToken()
+				return a.parseNumber()
+			} else if a.currentToken.Tok == "-" {
+				a.getNextToken()
+				number, err := strconv.ParseFloat(a.currentToken.Tok, 64)
+				if err != nil {
+					a.Err = errors.New(
+						fmt.Sprintf(
+							"%v\nShould be '(' or '0-9' but get '%s'\n%s",
+							err.Error(),
+							a.currentToken.Tok,
+							ErrPos(a.source, a.currentToken.Offset),
+						),
+					)
+					return NumberExprAST{}
+				}
+				return NumberExprAST{Val: -1 * number}
+			} else {
+				// Means this position should be '(' or number, use parNumber() to throw error
+				return a.parseNumber()
+			}
 		}
 	default:
 		return nil
