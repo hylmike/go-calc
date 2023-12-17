@@ -8,6 +8,7 @@ The calculation result of math expression '34 + 56 * (3 + 8) + 39/3 + 57 % 12' i
 ```
 
 If expression is invalid, will print error with error position
+
 Example:
 ```
 ./calc '6+2*(3+)-4'
