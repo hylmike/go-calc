@@ -7,3 +7,14 @@ Expression AST: {Operator:+ Lhs:{Operator:+ Lhs:{Operator:+ Lhs:{Val:34} Rhs:{Op
 The calculation result of math expression '34 + 56 * (3 + 8) + 39/3 + 57 % 12' is 667.00
 ```
 
+If expression is invalid, will print error with error position
+Example:
+```
+./calc '6+2*(3+)-4'
+Invalid expression:  strconv.ParseFloat: parsing ")": invalid syntax
+Should be '(' or '0-9' but get ')'
+----------
+6+2*(3+)-4
+       ^
+----------
+```
